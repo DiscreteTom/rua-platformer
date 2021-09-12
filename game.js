@@ -25,7 +25,11 @@ var score = 0;
 var gameOver = false;
 var scoreText;
 
-var game = new Phaser.Game(config);
+var game;
+
+function newGame() {
+  game = new Phaser.Game(config);
+}
 
 function preload() {
   this.load.image("sky", "assets/sky.png");
