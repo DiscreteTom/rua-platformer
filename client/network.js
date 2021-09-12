@@ -3,12 +3,15 @@ function connect() {
   var ws = new WebSocket(addr);
 
   ws.onopen = function (evt) {
-    newGame()
-    ws.send("join")
   };
 
   ws.onmessage = function (evt) {
-    console.log("Received Message: " + evt.data);
+    evt.data.text().then(d=>{
+      if (d.startsWith('id:')){
+        state.localPlayerId = d.slice(3)
+        newPlayer(state.scene)
+      }
+    })
   };
 
   ws.onclose = function (evt) {
