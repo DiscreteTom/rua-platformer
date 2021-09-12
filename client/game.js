@@ -28,6 +28,7 @@ var state = {
   gameOver: false,
   scoreText: null,
   scene: null,
+  commandQueue: [],
 };
 
 newGame();
@@ -136,26 +137,39 @@ function update() {
     return;
   }
 
+  // accept input
   if (state.localPlayerId) {
     if (state.cursors.left.isDown) {
-      state.players[state.localPlayerId].setVelocityX(-160);
-
-      state.players[state.localPlayerId].anims.play("left", true);
+      ws.send(`${state.localPlayerId}:left`);
     } else if (state.cursors.right.isDown) {
-      state.players[state.localPlayerId].setVelocityX(160);
-
-      state.players[state.localPlayerId].anims.play("right", true);
+      ws.send(`${state.localPlayerId}:right`);
     } else {
-      state.players[state.localPlayerId].setVelocityX(0);
-
-      state.players[state.localPlayerId].anims.play("turn");
+      ws.send(`${state.localPlayerId}:still`);
     }
 
     if (
       state.cursors.up.isDown &&
       state.players[state.localPlayerId].body.touching.down
     ) {
-      state.players[state.localPlayerId].setVelocityY(-330);
+      ws.send(`${state.localPlayerId}:up`);
+    }
+
+    while (state.commandQueue.length) {
+      let cmd = state.commandQueue.shift().split(":");
+      if (cmd[1] == "left") {
+        state.players[cmd[0]].setVelocityX(-160);
+        state.players[cmd[0]].anims.play("left", true);
+      } else if (cmd[1] == "right") {
+        state.players[cmd[0]].setVelocityX(160);
+        state.players[cmd[0]].anims.play("right", true);
+      } else if (cmd[1] == "still") {
+        state.players[cmd[0]].setVelocityX(0);
+        state.players[cmd[0]].anims.play("turn");
+      }
+
+      if (cmd[1] == "up") {
+        state.players[cmd[0]].setVelocityY(-330);
+      }
     }
   }
 }
