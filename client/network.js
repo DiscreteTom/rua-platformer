@@ -9,7 +9,7 @@ function connect() {
     evt.data.text().then(d=>{
       if (d.startsWith('id:')){
         state.localPlayerId = d.slice(3)
-        newPlayer(state.scene)
+        newPlayer(state.scene, d.slice(3))
       }
     })
   };

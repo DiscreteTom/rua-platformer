@@ -113,7 +113,7 @@ function create() {
   state.scene = this;
 }
 
-function newPlayer(scene) {
+function newPlayer(scene, id) {
   // The player and its settings
   let player = scene.physics.add.sprite(100, 450, "dude");
 
@@ -128,7 +128,7 @@ function newPlayer(scene) {
   scene.physics.add.overlap(player, state.stars, collectStar, null, scene);
 
   scene.physics.add.collider(player, state.bombs, hitBomb, null, scene);
-  state.players[state.localPlayerId] = player;
+  state.players[id] = player;
 }
 
 function update() {
