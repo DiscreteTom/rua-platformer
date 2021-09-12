@@ -11,11 +11,22 @@ func main() {
 	s := rua.NewEventDrivenServer()
 	s.
 		AfterAddPeer(func(newPeer rua.Peer) {
-			newPeer.Write([]byte(fmt.Sprintf("id:%d", newPeer.Id())))
+			s.ForEachPeer(func(id int, peer rua.Peer) {
+				if id == newPeer.Id() {
+					peer.Write([]byte(fmt.Sprintf("id:%d", newPeer.Id())))
+				} else {
+					peer.Write([]byte(fmt.Sprintf("new:%d", newPeer.Id())))
+				}
+			})
 		}).
 		OnPeerMsg(func(m *rua.PeerMsg) {
 			s.ForEachPeer(func(id int, peer rua.Peer) {
 				go peer.Write(m.Data)
+			})
+		}).
+		AfterRemovePeer(func(targetId int) {
+			s.ForEachPeer(func(id int, peer rua.Peer) {
+				peer.Write([]byte(fmt.Sprintf("gone:%d", targetId)))
 			})
 		})
 

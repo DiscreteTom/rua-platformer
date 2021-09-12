@@ -11,8 +11,12 @@ function connect() {
       if (d.startsWith("id:")) {
         state.localPlayerId = d.slice(3);
         newPlayer(state.scene, d.slice(3));
+      } else if (d.startsWith("new:")) {
+        newPlayer(state.scene, d.slice(4));
+      } else if (d.startsWith("gone:")) {
+        // TODO
       } else {
-        state.commandQueue.push(d)
+        state.commandQueue.push(d);
       }
     });
   };

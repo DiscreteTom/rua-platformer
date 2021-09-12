@@ -156,19 +156,22 @@ function update() {
 
     while (state.commandQueue.length) {
       let cmd = state.commandQueue.shift().split(":");
-      if (cmd[1] == "left") {
-        state.players[cmd[0]].setVelocityX(-160);
-        state.players[cmd[0]].anims.play("left", true);
-      } else if (cmd[1] == "right") {
-        state.players[cmd[0]].setVelocityX(160);
-        state.players[cmd[0]].anims.play("right", true);
-      } else if (cmd[1] == "still") {
-        state.players[cmd[0]].setVelocityX(0);
-        state.players[cmd[0]].anims.play("turn");
-      }
+      // if player exists
+      if (state.players[cmd[0]]) {
+        if (cmd[1] == "left") {
+          state.players[cmd[0]].setVelocityX(-160);
+          state.players[cmd[0]].anims.play("left", true);
+        } else if (cmd[1] == "right") {
+          state.players[cmd[0]].setVelocityX(160);
+          state.players[cmd[0]].anims.play("right", true);
+        } else if (cmd[1] == "still") {
+          state.players[cmd[0]].setVelocityX(0);
+          state.players[cmd[0]].anims.play("turn");
+        }
 
-      if (cmd[1] == "up") {
-        state.players[cmd[0]].setVelocityY(-330);
+        if (cmd[1] == "up") {
+          state.players[cmd[0]].setVelocityY(-330);
+        }
       }
     }
   }
