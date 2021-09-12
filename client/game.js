@@ -16,7 +16,7 @@ var config = {
   },
 };
 
-var player;
+var players = [];
 var stars;
 var bombs;
 var platforms;
@@ -24,6 +24,7 @@ var cursors;
 var score = 0;
 var gameOver = false;
 var scoreText;
+var scene;
 
 var game;
 
@@ -57,13 +58,6 @@ function create() {
   platforms.create(600, 400, "ground");
   platforms.create(50, 250, "ground");
   platforms.create(750, 220, "ground");
-
-  // The player and its settings
-  player = this.physics.add.sprite(100, 450, "dude");
-
-  //  Player physics properties. Give the little guy a slight bounce.
-  player.setBounce(0.2);
-  player.setCollideWorldBounds(true);
 
   //  Our player animations, turning, walking left and walking right.
   this.anims.create({
@@ -109,15 +103,28 @@ function create() {
     fill: "#000",
   });
 
+  players.push(newPlayer(this));
+  scene = this;
+}
+
+function newPlayer(scene) {
+  // The player and its settings
+  let player = scene.physics.add.sprite(100, 450, "dude");
+
+  //  Player physics properties. Give the little guy a slight bounce.
+  player.setBounce(0.2);
+  player.setCollideWorldBounds(true);
+
   //  Collide the player and the stars with the platforms
-  this.physics.add.collider(player, platforms);
-  this.physics.add.collider(stars, platforms);
-  this.physics.add.collider(bombs, platforms);
+  scene.physics.add.collider(player, platforms);
+  scene.physics.add.collider(stars, platforms);
+  scene.physics.add.collider(bombs, platforms);
 
   //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-  this.physics.add.overlap(player, stars, collectStar, null, this);
+  scene.physics.add.overlap(player, stars, collectStar, null, scene);
 
-  this.physics.add.collider(player, bombs, hitBomb, null, this);
+  scene.physics.add.collider(player, bombs, hitBomb, null, scene);
+  return player;
 }
 
 function update() {
@@ -126,21 +133,21 @@ function update() {
   }
 
   if (cursors.left.isDown) {
-    player.setVelocityX(-160);
+    players[0].setVelocityX(-160);
 
-    player.anims.play("left", true);
+    players[0].anims.play("left", true);
   } else if (cursors.right.isDown) {
-    player.setVelocityX(160);
+    players[0].setVelocityX(160);
 
-    player.anims.play("right", true);
+    players[0].anims.play("right", true);
   } else {
-    player.setVelocityX(0);
+    players[0].setVelocityX(0);
 
-    player.anims.play("turn");
+    players[0].anims.play("turn");
   }
 
-  if (cursors.up.isDown && player.body.touching.down) {
-    player.setVelocityY(-330);
+  if (cursors.up.isDown && players[0].body.touching.down) {
+    players[0].setVelocityY(-330);
   }
 }
 
