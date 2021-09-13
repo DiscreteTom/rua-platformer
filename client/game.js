@@ -20,15 +20,12 @@ var state = {
   game: null,
   players: {},
   localPlayerId: null,
-  stars: null,
-  bombs: null,
   platforms: null,
   cursors: null,
-  score: 0,
   gameOver: false,
-  scoreText: null,
   scene: null,
   commandQueue: [],
+  syncTime: 0,
 };
 
 newGame();
@@ -40,8 +37,6 @@ function newGame() {
 function preload() {
   this.load.image("sky", "assets/sky.png");
   this.load.image("ground", "assets/platform.png");
-  this.load.image("star", "assets/star.png");
-  this.load.image("bomb", "assets/bomb.png");
   this.load.spritesheet("dude", "assets/dude.png", {
     frameWidth: 32,
     frameHeight: 48,
@@ -88,30 +83,8 @@ function create() {
   //  Input Events
   state.cursors = this.input.keyboard.createCursorKeys();
 
-  //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
-  state.stars = this.physics.add.group({
-    key: "star",
-    repeat: 11,
-    setXY: { x: 12, y: 0, stepX: 70 },
-  });
-
-  state.stars.children.iterate(function (child) {
-    //  Give each star a slightly different bounce
-    child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-  });
-
-  state.bombs = this.physics.add.group();
-
-  //  The score
-  state.scoreText = this.add.text(16, 16, "score: 0", {
-    fontSize: "32px",
-    fill: "#000",
-  });
-
-  this.physics.add.collider(state.stars, state.platforms);
-  this.physics.add.collider(state.bombs, state.platforms);
-
   state.scene = this;
+  state.syncTime = Date.now();
 }
 
 function newPlayer(scene, id) {
@@ -125,10 +98,6 @@ function newPlayer(scene, id) {
   //  Collide the player and the stars with the platforms
   scene.physics.add.collider(player, state.platforms);
 
-  //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-  scene.physics.add.overlap(player, state.stars, collectStar, null, scene);
-
-  scene.physics.add.collider(player, state.bombs, hitBomb, null, scene);
   state.players[id] = player;
 }
 
@@ -137,8 +106,8 @@ function update() {
     return;
   }
 
-  // accept input
   if (state.localPlayerId) {
+    // accept input
     if (state.cursors.left.isDown) {
       ws.send(`${state.localPlayerId}:left`);
     } else if (state.cursors.right.isDown) {
@@ -146,7 +115,6 @@ function update() {
     } else {
       ws.send(`${state.localPlayerId}:still`);
     }
-
     if (
       state.cursors.up.isDown &&
       state.players[state.localPlayerId].body.touching.down
@@ -154,6 +122,7 @@ function update() {
       ws.send(`${state.localPlayerId}:up`);
     }
 
+    // process command
     while (state.commandQueue.length) {
       let cmd = state.commandQueue.shift().split(":");
       // if player exists
@@ -174,41 +143,28 @@ function update() {
         }
       }
     }
+
+    // report state
+    let now = Date.now();
+    if (now - state.syncTime > 1000) {
+      // sync every second
+      state.syncTime = now;
+      let p = state.players[state.localPlayerId];
+      ws.send(
+        `sync:${state.localPlayerId}:${p.x}:${p.y}:${p.body.velocity.x}:${p.body.velocity.y}`
+      );
+    }
   }
 }
 
-function collectStar(player, star) {
-  star.disableBody(true, true);
-
-  //  Add and update the score
-  state.score += 10;
-  state.scoreText.setText("Score: " + state.score);
-
-  if (state.stars.countActive(true) === 0) {
-    //  A new batch of stars to collect
-    state.stars.children.iterate(function (child) {
-      child.enableBody(true, child.x, 0, true, true);
-    });
-
-    var x =
-      player.x < 400
-        ? Phaser.Math.Between(400, 800)
-        : Phaser.Math.Between(0, 400);
-
-    var bomb = state.bombs.create(x, 16, "bomb");
-    bomb.setBounce(1);
-    bomb.setCollideWorldBounds(true);
-    bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-    bomb.allowGravity = false;
+function sync(s) {
+  let data = s.split(":");
+  if (state.players[data[1]]) {
+    state.players[data[1]].setX(Number(data[2]));
+    state.players[data[1]].setY(Number(data[3]));
+    state.players[data[1]].setVelocityX(Number(data[4]));
+    state.players[data[1]].setVelocityY(Number(data[5]));
+  } else {
+    newPlayer(state.scene, data[1]);
   }
-}
-
-function hitBomb(player, bomb) {
-  this.physics.pause();
-
-  player.setTint(0xff0000);
-
-  player.anims.play("turn");
-
-  state.gameOver = true;
 }

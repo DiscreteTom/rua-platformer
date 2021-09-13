@@ -15,6 +15,8 @@ function connect() {
         newPlayer(state.scene, d.slice(4));
       } else if (d.startsWith("gone:")) {
         // TODO
+      } else if (d.startsWith("sync:")) {
+        sync(d);
       } else {
         state.commandQueue.push(d);
       }
